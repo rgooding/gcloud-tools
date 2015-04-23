@@ -1,0 +1,75 @@
+#!/bin/bash
+
+CACHE_FILE=~/.gssh-zone-cache
+
+if [ $# -lt 1 ]
+then
+	echo "Usage:"
+	echo "$0 --get-zone hostname    : Get the zone for a host"
+	echo "$0 --flush-cache          : Flush all hosts from the zone cache"
+	echo "$0 --flush-cache hostname : Flush a specific host from the zone cache"
+	echo "$0 hostname [gcloud arguments...]"
+	echo
+	exit 1
+fi
+
+if [ "$1" = "--flush-cache" ]
+then
+	if [ $# -eq 1 ]
+	then
+		rm -f "$CACHE_FILE"
+	else
+		# BSD sed needs the -E argument but GNU sed does not
+		if [ `uname` = "Darwin" ]
+		then
+			sed -E -i.bak "/^$2:/d" "$CACHE_FILE"
+		else
+			sed -i.bak "/^$2:/d" "$CACHE_FILE"
+		fi
+	fi
+	exit 0
+fi
+
+GETZONE=0
+if [ "$1" = "--get-zone" ]
+then
+	GETZONE=1
+	shift
+fi
+
+# Check for the zone in the cache
+GCEHOST="$1"
+shift
+
+if [ -f "$CACHE_FILE" ]
+then
+	ZONE=`grep "$GCEHOST:" "$CACHE_FILE" | sed 's/^[^:]*:\(.*\)$/\1/'`
+	if [ "$ZONE" != "" ]
+	then
+		echo "Using zone $ZONE (from cache)" >&2
+	fi
+else
+	ZONE=""
+fi
+
+if [ "$ZONE" = "" ]
+then
+	# Get the zone from gcloud and store it in the cache
+	echo "Detecting zone for $GCEHOST..." >&2
+	ZONE=`gcloud compute instances list "$GCEHOST" | grep "$GCEHOST" | awk '{print $2}'`
+	if [ "$ZONE" = "" ]
+	then
+		echo "ERROR: Could not detect the zone for $GCEHOST" >&2
+		exit 1
+	fi
+	
+	echo "Zone detected as $ZONE" >&2
+	echo "$GCEHOST:$ZONE" >>"$CACHE_FILE"
+fi
+
+if [ $GETZONE -eq 1 ]
+then
+	echo $ZONE
+else
+	gcloud compute ssh $GCEHOST --zone $ZONE $@
+fi

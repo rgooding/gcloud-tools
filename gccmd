@@ -1,0 +1,28 @@
+#!/bin/bash
+
+CACHE_FILE=~/.gssh-zone-cache
+GSSH=gcssh
+
+if [ $# -lt 1 ]
+then
+	echo "Usage:"
+	echo "$0 --get-zone hostname    : Get the zone for a host"
+	echo "$0 --flush-cache          : Flush all hosts from the zone cache"
+	echo "$0 --flush-cache hostname : Flush a specific host from the zone cache"
+	echo "$0 hostname [command]"
+	echo
+	exit 1
+fi
+
+if [[ "$1" = "--flush-cache" || "$1" = "--get-zone" ]]
+then
+	$GSSH $@
+	exit $?
+fi
+
+GCEHOST="$1"
+shift
+
+ZONE=`$GSSH --get-zone $GCEHOST`
+
+gcloud compute ssh $GCEHOST --zone $ZONE --command "$1"
