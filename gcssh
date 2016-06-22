@@ -43,7 +43,7 @@ shift
 
 if [ -f "$CACHE_FILE" ]
 then
-	ZONE=`grep "$GCEHOST:" "$CACHE_FILE" | sed 's/^[^:]*:\(.*\)$/\1/'`
+	ZONE=`grep "^$GCEHOST:" "$CACHE_FILE" | sed 's/^[^:]*:\(.*\)$/\1/'`
 	if [ "$ZONE" != "" ]
 	then
 		echo "Using zone $ZONE (from cache)" >&2
