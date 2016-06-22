@@ -71,5 +71,5 @@ if [ $GETZONE -eq 1 ]
 then
 	echo $ZONE
 else
-	gcloud compute ssh $GCEHOST --zone $ZONE $@
+	gcloud compute ssh $GCEHOST --ssh-flag="-A" --zone $ZONE $@
 fi
