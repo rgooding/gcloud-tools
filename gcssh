@@ -56,7 +56,7 @@ if [ "$ZONE" = "" ]
 then
 	# Get the zone from gcloud and store it in the cache
 	echo "Detecting zone for $GCEHOST..." >&2
-	ZONE=`gcloud compute instances list "$GCEHOST" | grep "$GCEHOST" | awk '{print $2}'`
+	ZONE=`gcloud compute instances list --filter="name=('$GCEHOST')" | grep "$GCEHOST" | awk '{print $2}'`
 	if [ "$ZONE" = "" ]
 	then
 		echo "ERROR: Could not detect the zone for $GCEHOST" >&2
